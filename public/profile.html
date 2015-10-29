@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Profile</title>
+</head>
+<body>
+  <button id="netstat" onclick="runNetStat()">실행 테스트</button>
+  <button id="painter" onclick="runPainter()">그림판 실행</button>
+  <div>
+    <ul>
+      <li>
+        <a href='http://www.daum.net'>Daum</a>
+      </li>
+      <li>
+        <a href='http://www.naver.com'>Naver</a>
+      </li>
+    </ul>
+  </div>
+  <script src="socket.io-client/socket.io.js"></script>
+  <script>
+    var socket = io('http://localhost:3101');
+
+    function launch( launchOption ) {
+      socket.emit( 'launch', launchOption );
+    }
+
+    function runNetStat() {
+    	launch( null );
+    }
+
+    function runPainter() {
+      launch( {
+        cmd: 'mspaint',
+        args: [],
+		    detached: true
+      } );
+    }
+    
+    document.addEventListener( 'click', function(e) {
+    	var srcEle = e.srcElement;
+    	if ( srcEle.nodeName === 'A' ) {
+			  launch( {
+          cmd: 'cmd',
+          args: ['/s', '/c', 'start', srcEle.href],
+		  		detached: true
+        } );
+    	}
+    	e.preventDefault();
+    } );
+  </script>
+</body>
+</html>

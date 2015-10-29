@@ -1,0 +1,14 @@
+{
+  "name": "janusFace",
+  "version": "0.0.1",
+  "description": "Interface between browser and native features",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/inswave/janusFace.git"
+  },
+  "dependencies": {
+    "express": "^4.13.3",
+    "serve-favicon": "^2.3.0",
+    "socket.io": "^1.3.7"
+  }
+}
