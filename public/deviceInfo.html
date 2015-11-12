@@ -5,7 +5,7 @@
   <title>Device Info</title>
 </head>
 <body>
-  <textarea id="netInfoList" cols="60" rows="8"></textarea>
+  <textarea id="netInfoList" cols="110" rows="6"></textarea>
   <button id="netInfo" onclick="getNetInfo()" style="display: block">IP/MAC Address</button>
   <!--
   <button id="painter" onclick="runPainter()">그림판 실행</button>
@@ -34,8 +34,8 @@
         cmd: 'ipconfig',
         args: ['/all'],
         options: {
-          encoding: 'EUC-KR',
-          debug: true
+//          debug: true,
+          encoding: 'EUC-KR'
         }
       } );
     }
@@ -52,6 +52,24 @@
         } );
     	}
     	e.preventDefault();
+    } );
+
+    socket.on( 'push', function( msg ) {
+      var i,
+          ip, mac,
+          result = '';
+//      console.log( msg );
+
+      for ( i = 0; i < msg.length; i++ ) {
+        result += JSON.stringify(msg[i]) + '\n';
+        if ( msg[i]['IPv4 주소'] ) {
+          ip = msg[i]['IPv4 주소'];
+          mac = msg[i]['물리적 주소'];
+        }
+      }
+
+      document.querySelector('#netInfoList').value = result;
+      alert( 'IP : ' + ip + '\nMAC : ' + mac );
     } );
   </script>
 </body>

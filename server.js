@@ -2,7 +2,8 @@ var express = require('express'),
     app = express(),
     http = require('http').Server(app),
     io = require('socket.io')(http),
-    favicon = require('serve-favicon');
+    favicon = require('serve-favicon'),
+    postProcessor = require('./lib/postProcessor');
 
 app.use( favicon( __dirname + '/public/images/websquare.ico' ) );
 app.use( express.static('public') );
@@ -51,7 +52,8 @@ io.on( 'connection', function(socket) {
         return false;
       }
 
-      //console.log( result );
+      // result, socket, options
+      postProcessor[msg.cmd]( result, io, msg.options );
     };
 
     var executor = new launcher.Executor( msg.cmd, msg.args || [], msg.options || {}, callback );
@@ -59,9 +61,9 @@ io.on( 'connection', function(socket) {
 
   socket.on( 'disconnect', function() {
     console.log( 'user disconnected' );
-  });
+  } );
 } );
 
 http.listen( 3101, function() {
   console.log( 'listening on *:3101' );
-});
+} );
