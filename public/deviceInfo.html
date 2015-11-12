@@ -7,9 +7,15 @@
 <body>
   <textarea id="netInfoList" cols="110" rows="6"></textarea>
   <button id="netInfo" onclick="getNetInfo()" style="display: block">IP/MAC Address</button>
+  <hr/>
   <button id="painter" onclick="runPainter()">그림판 실행</button>
-  <!--
+  <hr/>
   <div>
+    <select id="browserType">
+      <option value="iexplore">IE</option>
+      <option value="chrome">Chrome</option>
+      <option value="default">기본 브라우저</option>
+    </select>
     <ul>
       <li>
         <a href='http://www.daum.net'>Daum</a>
@@ -19,7 +25,6 @@
       </li>
     </ul>
   </div>
-  -->
   <script src="socket.io-client/socket.io.js"></script>
   <script>
     var socket = io('http://localhost:3101');
@@ -51,16 +56,29 @@
     }
     
     document.addEventListener( 'click', function(e) {
-    	var srcEle = e.srcElement;
-    	if ( srcEle.nodeName === 'A' ) {
-        launch( {
-          cmd: 'cmd',
-          args: ['/s', '/c', 'start', srcEle.href],
-          options: {
-            detached: true
+    	var selectEle, browserType,
+          opt = {
+            cmd: 'cmd',
+            args: ['/s', '/c', 'start'],
+            options: {
+              detached: true
+            }
+          },
+          srcEle = e.srcElement;
+
+      try {
+        if ( srcEle.nodeName === 'A' ) {
+          selectEle = document.querySelector('#browserType');
+          browserType = selectEle.options[selectEle.selectedIndex].value;
+
+          if ( browserType !== 'default' ) {
+            opt.args.push(browserType);
           }
-        } );
-    	}
+          opt.args.push(srcEle.href);
+
+          launch( opt );
+        }
+      } catch(e) {}
     	e.preventDefault();
     } );
 
@@ -84,8 +102,6 @@
         document.querySelector('#netInfoList').value = data;
         alert( 'IP : ' + ip + '\nMAC : ' + mac );
       }
-
-
     } );
   </script>
 </body>
