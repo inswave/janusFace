@@ -45,8 +45,16 @@ io.on( 'connection', function(socket) {
       msg.options.stdio = 'ignore';
     }
 
-    //launcher.test();
-    var executor = new launcher.Executor( msg.cmd, msg.args || [], msg.options || {} );
+    var callback = function callback( error, result ) {
+      if ( error ) {
+        console.log("ERROR");
+        return false;
+      }
+
+      //console.log( result );
+    };
+
+    var executor = new launcher.Executor( msg.cmd, msg.args || [], msg.options || {}, callback );
   });
 
   socket.on( 'disconnect', function() {
