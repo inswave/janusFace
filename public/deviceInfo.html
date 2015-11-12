@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Device Info</title>
+</head>
+<body>
+  <textarea id="netInfoList" cols="60" rows="8"></textarea>
+  <button id="netInfo" onclick="getNetInfo()" style="display: block">IP/MAC Address</button>
+  <!--
+  <button id="painter" onclick="runPainter()">그림판 실행</button>
+  <div>
+    <ul>
+      <li>
+        <a href='http://www.daum.net'>Daum</a>
+      </li>
+      <li>
+        <a href='http://www.naver.com'>Naver</a>
+      </li>
+    </ul>
+  </div>
+  -->
+  <script src="socket.io-client/socket.io.js"></script>
+  <script>
+    var socket = io('http://localhost:3101');
+
+    function launch( launchOption ) {
+      socket.emit( 'launch', launchOption );
+    }
+
+    function getNetInfo() {
+      launch( {
+//        cmd: 'getmac',
+        cmd: 'ipconfig',
+        args: ['/all'],
+        options: {
+          encoding: 'CP949'
+        }
+      } );
+    }
+    
+    document.addEventListener( 'click', function(e) {
+    	var srcEle = e.srcElement;
+    	if ( srcEle.nodeName === 'A' ) {
+        launch( {
+          cmd: 'cmd',
+          args: ['/s', '/c', 'start', srcEle.href],
+          options: {
+            detached: true
+          }
+        } );
+    	}
+    	e.preventDefault();
+    } );
+  </script>
+</body>
+</html>

@@ -27,10 +27,7 @@ io.on( 'connection', function(socket) {
   });
 
   socket.on( 'launch', function(msg) {
-    var isWin = /^win/.test(process.platform ),
-        cmd,
-        args,
-        options = null;
+    var isWin = /^win/.test(process.platform);
 
     if ( msg ) {
       console.log( 'launch message: ' + JSON.stringify( msg ) );
@@ -39,25 +36,17 @@ io.on( 'connection', function(socket) {
       console.log( 'launch message empty.' );
     }
 
-    if ( msg.cmd ) {
-      cmd = msg.cmd;
-    } else {
-      cmd = isWin ? 'netstat.exe' : 'netstat';
-      args = ['-an'];
+    if ( !msg.cmd ) {
+      msg.cmd = isWin ? 'netstat.exe' : 'netstat';
+      msg.args = ['-an'];
     }
 
-    if ( msg.args ) {
-      args = msg.args;
-    }
-
-    if ( msg.detached ) {
-      options = {};
-      options.detached = true;
-      options.stdio = 'ignore';
+    if ( msg.options && msg.options.detached ) {
+      msg.options.stdio = 'ignore';
     }
 
     //launcher.test();
-    var executor = new launcher.Executor( cmd, args, options );
+    var executor = new launcher.Executor( msg.cmd, msg.args || [], msg.options || {} );
   });
 
   socket.on( 'disconnect', function() {
