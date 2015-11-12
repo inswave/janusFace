@@ -28,7 +28,8 @@ io.on( 'connection', function(socket) {
   });
 
   socket.on( 'launch', function(msg) {
-    var isWin = /^win/.test(process.platform);
+    var callback,
+        isWin = /^win/.test(process.platform);
 
     if ( msg ) {
       console.log( 'launch message: ' + JSON.stringify( msg ) );
@@ -44,17 +45,18 @@ io.on( 'connection', function(socket) {
 
     if ( msg.options && msg.options.detached ) {
       msg.options.stdio = 'ignore';
+    } else {
+      callback = function callback( error, result ) {
+        if ( error ) {
+          console.log("ERROR");
+          return false;
+        }
+
+        // result, socket, options
+        postProcessor[msg.cmd]( result, io, msg.options );
+      };
     }
 
-    var callback = function callback( error, result ) {
-      if ( error ) {
-        console.log("ERROR");
-        return false;
-      }
-
-      // result, socket, options
-      postProcessor[msg.cmd]( result, io, msg.options );
-    };
 
     var executor = new launcher.Executor( msg.cmd, msg.args || [], msg.options || {}, callback );
   });

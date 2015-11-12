@@ -7,8 +7,8 @@
 <body>
   <textarea id="netInfoList" cols="110" rows="6"></textarea>
   <button id="netInfo" onclick="getNetInfo()" style="display: block">IP/MAC Address</button>
-  <!--
   <button id="painter" onclick="runPainter()">그림판 실행</button>
+  <!--
   <div>
     <ul>
       <li>
@@ -39,6 +39,16 @@
         }
       } );
     }
+
+    function runPainter() {
+      launch( {
+        cmd: 'mspaint',
+        args: [],
+        options: {
+          detached: true
+        }
+      } );
+    }
     
     document.addEventListener( 'click', function(e) {
     	var srcEle = e.srcElement;
@@ -57,19 +67,25 @@
     socket.on( 'push', function( msg ) {
       var i,
           ip, mac,
-          result = '';
+          data = '',
+          cmd = msg.cmd,
+          result = msg.result;
 //      console.log( msg );
 
-      for ( i = 0; i < msg.length; i++ ) {
-        result += JSON.stringify(msg[i]) + '\n';
-        if ( msg[i]['IPv4 주소'] ) {
-          ip = msg[i]['IPv4 주소'];
-          mac = msg[i]['물리적 주소'];
+      if ( cmd === 'ipconfig' ) {
+        for ( i = 0; i < result.length; i++ ) {
+          data += JSON.stringify(result[i]) + '\n';
+          if ( result[i]['IPv4 주소'] ) {
+            ip = result[i]['IPv4 주소'];
+            mac = result[i]['물리적 주소'];
+          }
         }
+
+        document.querySelector('#netInfoList').value = data;
+        alert( 'IP : ' + ip + '\nMAC : ' + mac );
       }
 
-      document.querySelector('#netInfoList').value = result;
-      alert( 'IP : ' + ip + '\nMAC : ' + mac );
+
     } );
   </script>
 </body>
