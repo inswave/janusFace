@@ -1,0 +1,23 @@
+<html>
+<head>
+	<title>WebSocket - socket.io</title>
+</head>
+<body>
+  <input type="button" id="send" value="전송"/>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="socket.io-client/socket.io.js"></script>
+	<script type="text/javascript">
+    var socket;
+
+    $(function() {
+      socket = io('wss://127.0.0.1:3103');
+		});
+
+    document.addEventListener( 'click', function(e) {
+      if ( e.srcElement.id === "send" ) {
+        socket.emit( 'message', 'something' );
+      }
+    } );
+	</script>
+</body>
+</html>
