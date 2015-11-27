@@ -17,7 +17,9 @@
 		});
 
     document.addEventListener( 'click', function(e) {
-      if ( e.srcElement.id === "send" ) {
+      var target = e.target || e.srcElement;
+
+      if ( target.id === "send" ) {
         ws.send('something');
       }
     } );
