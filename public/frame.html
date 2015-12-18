@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test App</title>
+</head>
+<body>
+  <input type="button" id="register" value="Push 서버에 등록"/>
+  <script type="text/javascript">
+    var ws;
+    var uuid,
+      requestObj = {};
+
+    document.addEventListener( "DOMContentLoaded", function(e) {
+      ws = new WebSocket("wss://127.0.0.1:3111");
+
+      ws.onopen = function(e) {
+        console.log('Connection to server opened');
+
+        requestObj = {
+          module: 'util',
+          action: 'getUUID'
+        };
+
+        ws.send( JSON.stringify(requestObj) );
+      };
+
+      ws.onmessage = function(e) {
+        console.log( "data from server : " + e.data );
+        var msg = JSON.parse( e.data );
+
+        if ( msg.module === 'util' ) {
+          if ( msg.action === 'getUUID' ) {
+            uuid = msg.result;
+          }
+        }
+      };
+    });
+
+    document.addEventListener( 'click', function(e) {
+      var target = e.target || e.srcElement;
+
+      if ( target.id === "register" ) {
+        requestObj = {
+          module: 'push',
+          action: 'register',
+          args: [uuid],
+          options: { useWS: true }
+        };
+
+        ws.send( JSON.stringify(requestObj) );
+      }
+    } );
+  </script>
+</body>
+</html>
