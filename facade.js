@@ -39,7 +39,8 @@ var wss = new WebSocketServer( { server: https } );
     wsConnect.on( 'message', function ( message ) {
       //console.log( message );
       var msg = JSON.parse(message);
-      console.log( 'module: ' + msg.module + ' action: ' + msg.action + ' options: ' + JSON.stringify( msg.options ) );
+      console.log( 'module: ' + msg.module + ' action: ' + msg.action + ' options: ' +
+        ( msg.options? JSON.stringify( msg.options ) : '' ) );
       //console.log( lib[msg.module][msg.action]() );
 
       if ( msg.options ) {
@@ -61,4 +62,44 @@ var wss = new WebSocketServer( { server: https } );
   });
 })( { util: util, push: push } );
 
+// Test
+var https_test = require('https').Server( sslOptions );
 
+https_test.listen( 3112, function() {
+  console.log( 'listening on *:3112' );
+});
+
+var wss_test = new WebSocketServer( { server: https_test } );
+
+(function( library ) {
+  wss_test.on( 'connection', function ( wsConnect ) {
+    var lib = library;
+    console.log( 'wss_test connection' );
+
+    wsConnect.on( 'message', function ( message ) {
+      var msg = JSON.parse(message);
+      console.log( 'module: ' + msg.module + ' action: ' + msg.action + ' options: ' +
+        ( msg.options? JSON.stringify( msg.options ) : '' ) );
+
+      if ( msg.options ) {
+        msg.args = msg.args || [];
+        if ( msg.options.useWS ) {
+          msg.args.push( wsConnect );
+        } else if ( msg.options.useWSS ) {
+          msg.args.push( wss );
+        }
+        msg.args.push( msg.options );
+      }
+
+      msg.result = lib[msg.module][msg.action].apply( lib[msg.module], msg.args || [] );
+
+      if ( msg.options && ( msg.options.useWS || msg.options.useWSS ) ) {
+        msg.args.splice( msg.args.length - 2, 1 );
+      }
+
+      if ( msg.result !== 'silent' ) {
+        wsConnect.send( JSON.stringify(msg) );
+      }
+    });
+  });
+})( { util: util, push: push } );

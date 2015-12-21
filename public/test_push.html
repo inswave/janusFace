@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Push</title>
+  <style type="text/css">
+    body {
+      font-size: 0.8rem;
+    }
+    input {
+      margin-right: 0.5rem;
+    }
+    div, textarea {
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    UUID : <input type="text" id="uuid" size="40" value=""/>
+    BROADCAST : <input type="checkbox" id="broadcast"/>
+  </div>
+  <textarea id="uuidList" rows="6" cols="50" style="font-size: 0.8rem"></textarea>
+  <div>
+    메세지 : <input type="text" id="msg" size="40" value=""/>
+  </div>
+  <div>
+    <input type="button" id="getList" value="UUID 목록"/>
+    <input type="button" id="publish" value="Push 전송"/>
+  </div>
+  <script type="text/javascript">
+    var ws;
+    var requestObj;
+
+    document.addEventListener( "DOMContentLoaded", function(e) {
+      ws = new WebSocket("wss://127.0.0.1:3112");
+
+      ws.onopen = function(e) {
+        console.log('Push test connection to server opened');
+      };
+
+      ws.onmessage = function(e) {
+        console.log( "data from server : " + e.data );
+
+        var msg = JSON.parse( e.data );
+
+        if ( msg.module === 'push' ) {
+          if ( msg.action === 'getConnList' ) {
+            document.querySelector( '#uuidList' ).value = JSON.stringify(msg.result);
+          }
+        }
+      };
+    });
+
+    document.addEventListener( 'click', function(e) {
+      var uuid, msg,
+          requestObj = null;
+      var target = e.target || e.srcElement;
+
+      if ( target.id === "getList" ) {
+        requestObj = {
+          module: 'push',
+          action: 'getConnList'
+        };
+      } else if ( target.id === 'publish' ) {
+        uuid = document.querySelector( '#uuid' ).value;
+        msg = document.querySelector( '#msg' ).value;
+
+        if ( uuid && msg ) {
+          requestObj = {
+            module: 'push',
+            action: 'publish',
+            args: [uuid, '{ "msg": "' + msg + '" }' ],
+            options: { useWSS: true }
+          };
+        } else {
+          requestObj = null;
+        }
+      }
+
+      if ( requestObj ) {
+        ws.send( JSON.stringify(requestObj) );
+      }
+    } );
+  </script>
+</body>
+</html>
