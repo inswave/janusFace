@@ -53,6 +53,7 @@
 
     document.addEventListener( 'click', function(e) {
       var uuid, msg,
+          broadcast = false,
           requestObj = null;
       var target = e.target || e.srcElement;
 
@@ -62,16 +63,21 @@
           action: 'getConnList'
         };
       } else if ( target.id === 'publish' ) {
-        uuid = document.querySelector( '#uuid' ).value;
-        msg = document.querySelector( '#msg' ).value;
+        uuid = document.querySelector( '#uuid' ).value || '';
+        msg = document.querySelector( '#msg' ).value || '' ;
+        broadcast = document.querySelector('#broadcast').checked;
 
-        if ( uuid && msg ) {
+        if ( broadcast || ( uuid && msg ) ) {
           requestObj = {
             module: 'push',
             action: 'publish',
             args: [uuid, '{ "msg": "' + msg + '" }' ],
             options: { useWSS: true }
           };
+
+          if ( broadcast ) {
+            requestObj.options.broadcast = true;
+          }
         } else {
           requestObj = null;
         }
