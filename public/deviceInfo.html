@@ -18,7 +18,10 @@
     </select>
     <ul>
       <li>
+        <!--
         <a href='http://www.daum.net'>Daum</a>
+        -->
+        <a href='http://search.daum.net/search?w=tot&DA=YZR&t__nil_searchbox=btn&sug=&sugo=&sq=&o=&q=car'>Daum</a>
       </li>
       <li>
         <a href='http://www.naver.com'>Naver</a>
@@ -56,7 +59,7 @@
     }
     
     document.addEventListener( 'click', function(e) {
-    	var selectEle, browserType,
+    	var selectEle, browserType, uri,
           opt = {
             cmd: 'cmd',
             args: ['/s', '/c', 'start'],
@@ -74,7 +77,13 @@
           if ( browserType !== 'default' ) {
             opt.args.push(browserType);
           }
-          opt.args.push(srcEle.href);
+          uri = srcEle.href.indexOf('?');
+          if ( uri > 0 ) {
+            uri = srcEle.href.substring( 0, uri + 1 ) + encodeURIComponent( srcEle.href.substring( uri + 1) );
+          } else {
+            uri = srcEle.href;
+          }
+          opt.args.push( uri );
 
           launch( opt );
         }
