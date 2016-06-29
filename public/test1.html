@@ -3,26 +3,225 @@
 	<title>WebSocket - Native</title>
 </head>
 <body>
-  <input type="button" id="send" value="전송"/>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-	<script type="text/javascript">
+  <!--<img src="images/splash.bmp">-->
+  <img id="image" src="">
+  <canvas id="canvas" width="500" height="300"></canvas>
+  <div>
+    <select id="target" >
+      <option value="img">img</option>
+      <option value="canvas">canvas</option>
+    </select>
+    <select id="srcType" >
+      <option value="Base64">Base64</option>
+      <option value="Binary">Binary</option>
+    </select>
+    <input type="button" id="getSrc" value="getSrc"/>
+    <input type="file" name="fileChooser" id="fileChooser"/>
+    <input type="button" name="reset" id="reset" value="초기화"/>
+    <input type="button" name="saveFile" id="saveFile" value="파일저장"/>
+    <input type="button" name="uploadFile" id="uploadFile" value="파일업로드"/>
+  </div>
+  <script type="text/javascript" src="js/FileSaver.js"></script>
+  <script type="text/javascript">
+    var query, queryAll, queryID, queryClass, queryTag;
     var ws;
+    var target = 'img',
+        srcType = 'Base64';
+    var hasFileAPI = typeof FileReader !== 'undefined',
+        readBinary = hasFileAPI && FileReader.prototype.readAsArrayBuffer !== 'undefined';
+    var uploadURL = 'http://127.0.0.1:8080/SWING/controller.jsp?srcType=';
+    var blobImage;
 
-    $(function() {
-			ws = new WebSocket("wss://127.0.0.1:3103");
+    function shorten() {
+      query = document.querySelector.bind(document);
+      queryAll = document.querySelectorAll.bind(document);
+      queryID = document.getElementById.bind(document);
+      queryClass = document.getElementsByClassName.bind(document);
+      queryTag = document.getElementsByTagName.bind(document);
+    }
 
-			ws.onopen = function(e) {
-				console.log('Connection to server opened');
-			}
-		});
+    function updateTarget() {
+      target = this[this.selectedIndex].value || '';
+    }
 
-    document.addEventListener( 'click', function(e) {
-      var target = e.target || e.srcElement;
+    function updateSrcType() {
+      srcType = this[this.selectedIndex].value || '';
+    }
 
-      if ( target.id === "send" ) {
-        ws.send('something');
+    function sendData(data) {
+      var request = new XMLHttpRequest();
+      var targetURL = uploadURL;
+      targetURL += srcType;
+      request.open( "POST", targetURL, true );
+      request.onload = function (oEvent) {
+        console.log( 'Uploaded' );
+      };
+
+      if ( data ) {
+        // data:image/bmp;base64,Q
+        data = data.split(',');
+        var mime = data[0].split(';')[0].split(':')[1];
+        request.setRequestHeader( 'Content-Type', mime );
+        request.send(data[1]);
+      } else {
+        request.setRequestHeader( 'Content-Type', 'image/bmp' );
+        request.send(blobImage);          
       }
+    }
+
+    function uploadFile() {
+      var resource, data;
+
+      if ( srcType === 'Base64' ) {
+        if ( target === 'img' ) {
+          resource = query('#image');
+          data = resource.src;
+        } else if ( target === 'canvas' ) {
+          resource = query('#canvas');
+          data = resource.toDataURL();
+        }
+
+        sendData(data);
+      } else if ( srcType === 'Binary' ) {
+        sendData();
+      }
+    }
+
+    function readFile(f) {
+      var reader = new FileReader(),
+          processData = function(e) {
+            var data, bytes, blob;
+            var fileChooser;
+
+            if ( this.readyState === this.DONE ) {
+              data = e.target.result;
+
+              if ( readBinary ) {
+                bytes = new Uint8Array(data);
+                blob = new Blob( [bytes], { type: 'image/bmp' } );
+                data = URL.createObjectURL( blob );
+              }
+
+              loadImage(data);
+
+              if ( readBinary ) {
+                URL.revokeObjectURL( blob );
+              }
+
+              fileChooser = query('#fileChooser');
+              fileChooser.value = '';
+
+              if ( fileChooser.value ) {
+                fileChooser.select();
+                document.selection.clear();
+              }
+            }
+          };
+
+      if (f) {
+        if ( readBinary ) {
+          reader.onload = processData;
+          reader.readAsArrayBuffer(f);
+        } else {
+          reader.onloadend = processData;
+          reader.readAsDataURL(f);
+        }
+      }
+    }
+
+    function handleFile(e) {
+      var f,
+          files = e.target.files;
+
+      if ( files ) {
+        f = files[0];
+        if ( hasFileAPI ) {
+          readFile(f);
+        } else {
+          console.log('not supported File API');
+        }
+      }
+    }
+
+    function addEvent() {
+      ws.onmessage = function ( e ) {
+        if ( e.data instanceof Blob ) {
+          blobImage = e.data;
+          loadImage( URL.createObjectURL( e.data ) );
+        } else {
+          loadImage( 'data:image/bmp;base64,' + e.data );
+        }
+      };
+
+      document.addEventListener( 'click', function(e) {
+        var target = e.target || e.srcElement;
+        var canvas = query('#canvas'),
+            ctx;
+
+        if ( target.id === 'getSrc' ) {
+          ws.send( 'get' + srcType );
+        } else if ( target.id === 'reset' ) {
+          query('#image').src = '';
+
+          canvas = query('#canvas');
+          ctx = canvas.getContext('2d');
+          ctx.clearRect( 0, 0, canvas.width, canvas.height );
+        } else if ( target.id === 'saveFile' ) {
+          canvas.toBlob( function(blob) {
+            saveAs( blob, "sample.bmp" );
+          }, 'image/bmp' );
+        } else if ( target.id === 'uploadFile' ) {
+          uploadFile();
+        }
+      } );
+
+      document.addEventListener( 'change', function (e) {
+        var target = e.target || e.srcElement;
+
+        if ( target.id === 'target' ) {
+          updateTarget.call(target);
+        } else if ( target.id === 'srcType' ) {
+          updateSrcType.call(target);
+        } else if ( target.id === 'fileChooser' ) {
+          handleFile(e);
+        }
+      } );
+    }
+
+    function loadImage( data ) {
+      var img;
+
+      if ( target === 'img' ) {
+        img = query('#image');
+      } else if ( target === 'canvas' ) {
+        var ctx = query('#canvas').getContext('2d');
+        img = new Image();
+        img.addEventListener( "load", function() {
+          ctx.drawImage( img, 0, 0 );
+        }, false );
+      }
+
+      if ( img ) {
+        if ( data ) {
+          img.src = data;
+        } else {
+          img.src = 'images/splash.bmp';
+        }
+      }
+    }
+
+    document.addEventListener( "DOMContentLoaded", function(e) {
+      shorten();
+//    ws = new WebSocket("wss://127.0.0.1:3103");
+      ws = new WebSocket("wss://wgear.io:3103");
+
+      ws.onopen = function(e) {
+        console.log('Connection to server opened');
+      };
+
+      addEvent();
+//      loadImage();
     } );
-	</script>
+  </script>
 </body>
 </html>
